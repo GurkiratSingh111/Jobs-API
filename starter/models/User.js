@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const UserSchema = new mongoose.Schema({
     email: {
@@ -25,11 +26,25 @@ const UserSchema = new mongoose.Schema({
         // maxlength: 12,
     },
 })
-// use 
+// use regular function here not arrow function
+// because arrow function does not have this keyword
+// and we need this keyword to access the user document
+//this will always point to our document
+//'save' before we save the document
 UserSchema.pre('save', async function () {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 
 })
 
+//Instance methods on the schema
+UserSchema.methods.createJWT = function () {
+    return jwt.sign({ userId: this._id, name: this.name }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_LIFETIME,
+    })
+}
+
+// UserSchema.methods.getName = function () {
+//     return this.name;
+// }
 module.exports = mongoose.model('User', UserSchema);
